@@ -6,11 +6,11 @@
 
 <h4>{{article.title}}</h4>
 <hr>
-Yazar : {{article.author}}
+Yazar : {{article[2]}}
 <hr>
-Tarih : {{article.created_date}}
+Tarih : {{article[4]}}
 <hr>
-{{article.content|safe}}
+{{article[3]|safe}} <!-- prevent html code that uses ck editor -->
 {% else %}
 
 <div class = "alert alert-warning">

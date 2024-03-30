@@ -5,7 +5,6 @@ from wtforms import Form, StringField, TextAreaField, PasswordField, validators
 import email_validator
 from passlib.hash import sha256_crypt
 from functools import wraps
-
 from flaskext.mysql import MySQL
 
 # Kullanıcı Giriş Decorator'ı
@@ -70,9 +69,9 @@ def about():
 # Makale Sayfası
 @app.route("/articles")
 def articles():
-    cursor = mysql.connection.cursor()
+    cursor = mysql.cursor()
 
-    sorgu = "Select * From articles"
+    sorgu = "Select * From articles"  # all articles
 
     result = cursor.execute(sorgu)
 
@@ -86,9 +85,9 @@ def articles():
 @app.route("/dashboard")
 @login_required
 def dashboard():
-    cursor = mysql.connection.cursor()
+    cursor = mysql.cursor()
 
-    sorgu = "Select * From articles where author = %s"
+    sorgu = "Select * From articles where author = %s"  # just logined user's articles
 
     result = cursor.execute(sorgu, (session["username"],))
 
@@ -112,9 +111,7 @@ def register():
         username = form.username.data
         email = form.email.data
         password = sha256_crypt.encrypt(form.password.data)
-
         cursor = mysql.cursor()
-
         sorgu = "Insert into users(name,email,username,password) VALUES(%s,%s,%s,%s)"
 
         cursor.execute(sorgu, (name, email, username, password))
@@ -166,7 +163,7 @@ def login():
 
 @app.route("/article/<string:id>")
 def article(id):
-    cursor = mysql.connection.cursor()
+    cursor = mysql.cursor()
 
     sorgu = "Select * from articles where id = %s"
 
@@ -194,13 +191,13 @@ def addarticle():
         title = form.title.data
         content = form.content.data
 
-        cursor = mysql.connection.cursor()
+        cursor = mysql.cursor()
 
         sorgu = "Insert into articles(title,author,content) VALUES(%s,%s,%s)"
 
         cursor.execute(sorgu, (title, session["username"], content))
 
-        mysql.connection.commit()
+        mysql.commit()
 
         cursor.close()
 
@@ -215,7 +212,7 @@ def addarticle():
 @app.route("/delete/<string:id>")
 @login_required
 def delete(id):
-    cursor = mysql.connection.cursor()
+    cursor = mysql.cursor()
 
     sorgu = "Select * from articles where author = %s and id = %s"
 
@@ -226,7 +223,8 @@ def delete(id):
 
         cursor.execute(sorgu2, (id,))
 
-        mysql.connection.commit()
+        mysql.commit()
+
 
         return redirect(url_for("dashboard"))
     else:
@@ -239,7 +237,7 @@ def delete(id):
 @login_required
 def update(id):
     if request.method == "GET":
-        cursor = mysql.connection.cursor()
+        cursor = mysql.cursor()
 
         sorgu = "Select * from articles where id = %s and author = %s"
         result = cursor.execute(sorgu, (id, session["username"]))
@@ -251,8 +249,8 @@ def update(id):
             article = cursor.fetchone()
             form = ArticleForm()
 
-            form.title.data = article["title"]
-            form.content.data = article["content"]
+            form.title.data = article[1]
+            form.content.data = article[3]
             return render_template("update.html", form=form)
 
     else:
@@ -264,11 +262,11 @@ def update(id):
 
         sorgu2 = "Update articles Set title = %s,content = %s where id = %s "
 
-        cursor = mysql.connection.cursor()
+        cursor = mysql.cursor()
 
         cursor.execute(sorgu2, (newTitle, newContent, id))
 
-        mysql.connection.commit()
+        mysql.commit()
 
         flash("Makale başarıyla güncellendi", "success")
 
@@ -291,7 +289,7 @@ def search():
     else:
         keyword = request.form.get("keyword")
 
-        cursor = mysql.connection.cursor()
+        cursor = mysql.cursor()
 
         sorgu = "Select * from articles where title like '%" + keyword + "%'"
 
